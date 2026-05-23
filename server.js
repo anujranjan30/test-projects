@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
@@ -133,7 +133,43 @@ app.get('/api/orders', (req, res) => {
 
 const HOST = '0.0.0.0';
 app.listen(PORT, HOST, () => {
-  console.log(FlowerMarket running on http://localhost:);
-  console.log(Network access: http://<YOUR_PC_IP>:);
+  console.log('FlowerMarket running on http://localhost:' + PORT);
+  console.log('Network access enabled on port ' + PORT);
 });
+
+<<<<<<< HEAD
+=======
+app.delete('/api/products/:id', (req,res)=>{
+  db.run('DELETE FROM products WHERE id=?',[req.params.id], function(e){
+    if(e) return res.status(500).json({error:'failed'});
+    res.json({deleted:this.changes});
+  });
+});
+
+app.post('/api/payment/simulate', (req,res)=>{
+  const ok = Math.random()>0.2;
+  res.json({paymentStatus: ok?'SUCCESS':'FAILED', transactionId:'TXN'+Date.now()});
+});
+
+app.post('/api/orders', (req,res)=>{
+  const {customerName,phone,address,cartItems,totalAmount,paymentStatus}=req.body;
+  db.run('INSERT INTO orders (customerName, phone, address, totalAmount, paymentStatus) VALUES (?, ?, ?, ?, ?)',
+    [customerName,phone,address,totalAmount,paymentStatus], function(e){
+      if(e) return res.status(500).json({error:'failed'});
+      const orderId=this.lastID;
+      const s=db.prepare('INSERT INTO order_items (orderId, productId, qty, unitPrice) VALUES (?, ?, ?, ?)');
+      (cartItems||[]).forEach(i=>s.run(orderId,i.id,i.qty,i.price)); s.finalize();
+      res.json({orderId});
+  });
+});
+
+app.get('/api/orders',(req,res)=>{
+  db.all('SELECT * FROM orders ORDER BY id DESC',[],(e,rows)=> e?res.status(500).json({error:'failed'}):res.json(rows));
+});
+
+app.listen(PORT, HOST, () => {
+  console.log('FlowerMarket running on http://localhost:' + PORT);
+});
+
+>>>>>>> 6caef8e (Fix server.js startup log syntax)
 
